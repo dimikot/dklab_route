@@ -5,16 +5,16 @@ Dklab_Route_DomainZone: match the whole domain with empty zone
 require dirname(__FILE__) . '/../init.php';
 
 $r = new Dklab_Route_DomainZone(
-	array(
-		'app1' => array(
-			'domain.com',
-		),
-		'appDef' => array(
-			'',
-		),
-	), 
-	"xxx.ru",
-	array()
+    array(
+        'app1' => array(
+            'domain.com',
+        ),
+        'appDef' => array(
+            '',
+        ),
+    ),
+    "xxx.ru",
+    array()
 );
 
 testMatch($r, "my.domain.com", 'Non-default match');

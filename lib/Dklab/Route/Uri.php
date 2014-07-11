@@ -1,18 +1,18 @@
 <?php
 /**
  * Dklab_Route_Uri: router for internal URIs.
- * 
+ *
  * Each parsable URI must be in format:
  *   - "<domain_prefix>/<path_info>"
- *   - "/<path_info> 
+ *   - "/<path_info>
  * where:
  *   - <domain_prefix> is the prefix of application's domain (if present);
  *   - <path_info> is the relative URI.
- * 
- * URL map file parsing is a quite heavy operation, but this class does not 
+ *
+ * URL map file parsing is a quite heavy operation, but this class does not
  * implement any caching behaviour. To implement caching, just cache the
  * whole Dklab_Route_Uri object from outside the class.
- * 
+ *
  * @version 1.13
  */
 require_once "Dklab/Route/Exception.php";
@@ -146,11 +146,11 @@ class Dklab_Route_Uri
      */
     private function _readMap($iniFile)
     {
-    	if (is_string($iniFile)) {
-	        $ini = parse_ini_file($iniFile, true);
-	    } else {
-	    	$ini = $iniFile;
-	    }
+        if (is_string($iniFile)) {
+            $ini = parse_ini_file($iniFile, true);
+        } else {
+            $ini = $iniFile;
+        }
         return array(
             'byName'  => $this->_buildMapByName($ini),
             'options' => $this->_buildOptions($ini)
@@ -215,7 +215,7 @@ class Dklab_Route_Uri
         $chunks = explode("/", $url);
         $parts = array();
         foreach ($chunks as $chunk) {
-        	$m = null;
+            $m = null;
             if (preg_match('/^([a-z]\w*)\s*=\s*(.*)$/si', $chunk, $m)) {
                 $parts[$m[1]] = $m[2];
             } else {

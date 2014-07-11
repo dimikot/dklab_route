@@ -5,12 +5,12 @@ Dklab_Route_DomainZone: test assemble() call for empty (default) domain
 require dirname(__FILE__) . '/../init.php';
 
 $r = new Dklab_Route_DomainZone(
-	array(
-		"appCur" => array("cur"),
-		"app1" => array("")
-	), 
-	'cur.dev.example.com', 
-	array('dev.example.com')
+    array(
+        "appCur" => array("cur"),
+        "app1" => array("")
+    ),
+    'cur.dev.example.com',
+    array('dev.example.com')
 );
 testAssemble($r, array("app" => "app1", "subDomain" => "my.xyz.ru"), 'Default domain assemble');
 

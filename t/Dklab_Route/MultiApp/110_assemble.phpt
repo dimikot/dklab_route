@@ -5,11 +5,11 @@ Dklab_Route_MultiApp: assemble() test
 require dirname(__FILE__) . '/../init.php';
 
 $multiApp = new Dklab_Route_MultiApp(
-	new Dklab_Route_DomainZone($fixtureDomainZone1, "domain1.com", array()),
-	array(
-		'app1' => new Dklab_Route_Uri($fixtureUri1File),
-		'app2' => new Dklab_Route_Uri($fixtureUri1File),
-	)
+    new Dklab_Route_DomainZone($fixtureDomainZone1, "domain1.com", array()),
+    array(
+        'app1' => new Dklab_Route_Uri($fixtureUri1File),
+        'app2' => new Dklab_Route_Uri($fixtureUri1File),
+    )
 );
 
 testAssemble($multiApp, array(), "No app");

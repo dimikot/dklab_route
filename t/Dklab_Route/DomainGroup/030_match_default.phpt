@@ -5,16 +5,16 @@ Dklab_Route_DomainGroup: match with the whole domain name (default app)
 require dirname(__FILE__) . '/../init.php';
 
 $r = new Dklab_Route_DomainGroup(array(
-	'app1' => array(
-		'dev' => 'app1.*.dev.example.com',
-		'rel' => 'app1.prod.example.com',
-		'prod' => 'domain1.com',
-	),
-	'appDef' => array(
-		'dev' => 'default.*.dev.example.com',
-		'rel' => 'default.prod.example.com',
-		'prod' => '',
-	)
+    'app1' => array(
+        'dev' => 'app1.*.dev.example.com',
+        'rel' => 'app1.prod.example.com',
+        'prod' => 'domain1.com',
+    ),
+    'appDef' => array(
+        'dev' => 'default.*.dev.example.com',
+        'rel' => 'default.prod.example.com',
+        'prod' => '',
+    )
 ), 'xxx.ru');
 
 printr($r->match("my.app1.LGN.dev.example.com"), 'Non-default match');
