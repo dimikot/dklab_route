@@ -13,12 +13,14 @@
  * implement any caching behaviour. To implement caching, just cache the
  * whole Dklab_Route_Uri object from outside the class.
  *
- * @version 1.13
+ * @version 1.15
  */
 require_once "Dklab/Route/Exception.php";
 
 class Dklab_Route_Uri
 {
+    const EMPTY_ROUTE_PART = "---";
+
     /**
      * Router map by page name.
      *
@@ -30,10 +32,28 @@ class Dklab_Route_Uri
      * Constructor.
      *
      * @param mixed $iniFile    INI file path or 2d array of routes.
+     * @param array $variables  Values for {{VAR_NAME}} replacements in the INI file.
      */
-    public function __construct($iniFile)
+    public function __construct($iniFile, array $variables = array())
     {
-        $this->_map = $this->_readMap($iniFile);
+        $cacheKey = $cacheTime = null;
+        if (is_string($iniFile) && function_exists('apc_fetch')) {
+            $cacheKey = __CLASS__ . "_" . md5($iniFile . serialize($variables));
+            $cacheTime = filemtime($iniFile);
+            $stored = apc_fetch($cacheKey);
+            if (is_array($stored) && $stored['time'] == $cacheTime) {
+                $this->_map = $stored['v'];
+            }
+        }
+        if (!$this->_map) {
+            $this->_map = $this->_readMap($iniFile, $variables);
+        }
+        if ($cacheKey) {
+            apc_store($cacheKey, array(
+                'time' => $cacheTime,
+                'v' => $this->_map,
+            ));
+        }
     }
 
     /**
@@ -57,6 +77,9 @@ class Dklab_Route_Uri
         $uri = rtrim($uri, '/');
 
         $chunks = explode('/', $uri);
+        foreach ($chunks as $i => $v) {
+            if ($v == self::EMPTY_ROUTE_PART) $chunks[$i] = "";
+        }
         $chunks_count = count($chunks);
         foreach ($this->_map['byName'] as $name => $parts) {
             $parsed = $parts;
@@ -99,6 +122,7 @@ class Dklab_Route_Uri
      *
      * @param array $parsed
      * @return string
+     * @throws Dklab_Route_Exception
      */
     public function assemble($parsed)
     {
@@ -110,6 +134,7 @@ class Dklab_Route_Uri
             throw new Dklab_Route_Exception("No URL map item '{$name}' found");
         }
         $parts = $this->_map['byName'][$name]['url'];
+        $value = '';
         foreach ($parts as $key => $value) {
             if (!is_numeric($key)) {
                 if (!isset($parsed[$key])) {
@@ -119,7 +144,7 @@ class Dklab_Route_Uri
                 if (!is_scalar($parsed[$key])) {
                     throw new Dklab_Route_Exception("Parameter '$key' must be scalar, given: " . var_export($parsed[$key], 1) . "' (name  '" . $parsed['name'] . "')");
                 }
-                $parts[$key] = $parsed[$key];
+                $parts[$key] = strlen($parsed[$key])? $parsed[$key] : self::EMPTY_ROUTE_PART;
             }
         }
         return join('/', $parts) . ($value == '' ? null : '/');
@@ -127,34 +152,57 @@ class Dklab_Route_Uri
 
 
     /**
-     * Returns routing option from the INI config.
+     * Returns a routing option from the INI config.
      *
      * @param string $name
      * @return string
      */
     public function getOption($name)
     {
-        return @$this->_map['options'][$name];
+        return isset($this->_map['options'][$name])? $this->_map['options'][$name] : null;
     }
 
 
     /**
      * Loads an INI file.
      *
-     * @param unknown_type $iniFile
-     * @return unknown
+     * @param string $iniFile
+     * @param array $variables
+     * @return array
      */
-    private function _readMap($iniFile)
+    private function _readMap($iniFile, array $variables = array())
     {
         if (is_string($iniFile)) {
             $ini = parse_ini_file($iniFile, true);
         } else {
             $ini = $iniFile;
         }
+        foreach ($ini as $sectionName => $section) {
+            if (!is_array($section)) {
+                $ini[$sectionName] = $this->_replaceVariables($section, $variables);
+            } else {
+                foreach ($section as $k => $v) {
+                    $ini[$sectionName][$k] = $this->_replaceVariables($v, $variables);
+                }
+            }
+        }
         return array(
             'byName'  => $this->_buildMapByName($ini),
             'options' => $this->_buildOptions($ini)
         );
+    }
+
+
+    /**
+     * @param string $s
+     * @param array $variables
+     * @return string
+     */
+    private function _replaceVariables($s, $variables)
+    {
+        return preg_replace_callback('/\{\{\s*([^}\s]+)\s*\}\}/s', function($m) use ($variables, $variables) {
+            return isset($variables[$m[1]])? $variables[$m[1]] : "?";
+        }, $s);
     }
 
 
@@ -181,8 +229,9 @@ class Dklab_Route_Uri
      *
      * @param array $ini
      * @return array
+     * @throws Dklab_Route_Exception
      */
-    public function _buildMapByName($ini)
+    private function _buildMapByName($ini)
     {
         $mapByName = array();
         foreach ($ini as $name => $route) {
@@ -209,12 +258,11 @@ class Dklab_Route_Uri
      * @param string $url
      * @return array
      */
-    public function _buildPartsByUriMask($url)
+    private function _buildPartsByUriMask($url)
     {
-        $url = preg_replace('{/+$}s', '', $url);
-        $chunks = explode("/", $url);
+        $url = rtrim($url, '/');
         $parts = array();
-        foreach ($chunks as $chunk) {
+        foreach (explode("/", $url) as $chunk) {
             $m = null;
             if (preg_match('/^([a-z]\w*)\s*=\s*(.*)$/si', $chunk, $m)) {
                 $parts[$m[1]] = $m[2];
