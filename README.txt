@@ -1,7 +1,7 @@
-Dklab_Route: Library to match() and assemble() URLs using various methods.
+Dklab_Route: a library to match() and assemble() URLs using various methods
 (C) Dmitry Koterov, http://en.dklab.ru/lib/Dklab_Route/
 
-This library parses and builds URLs according to specified rules. It is 
+This library parses and builds URLs according to specified rules. It is
 a bit low-level, but powerful.
 
 
